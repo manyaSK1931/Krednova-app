@@ -1,5 +1,6 @@
 // Talks to the Spring Boot API (through the Vercel/Vite proxy). The session cookie is HttpOnly, so React never sees it.
-const BASE = '/api/v1';
+const BASE = 'https://krednova-app-n686.onrender.com/api/v1';
+
 const xsrf = () => decodeURIComponent((document.cookie.split('; ').find((c) => c.startsWith('XSRF-TOKEN=')) || '').split('=')[1] || '');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
