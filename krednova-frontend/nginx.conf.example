@@ -1,0 +1,36 @@
+# Example production setup: nginx serves the built React app (run `npm run build`, copy the dist folder to /var/www/krednova)
+# and forwards /api to Spring Boot. Replace payroll.example.com and the certificate paths.
+# Put `server_tokens off;` in the http { } block to hide the nginx version.
+
+server {
+    listen 80;
+    server_name payroll.example.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name payroll.example.com;
+    ssl_certificate     /etc/letsencrypt/live/payroll.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/payroll.example.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    client_max_body_size 100k;   # no uploads in this app, so keep request bodies small
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=()" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" always;
+
+    root /var/www/krednova;
+    index index.html;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $remote_addr;   # $remote_addr (not $proxy_add_x_forwarded_for) so visitors cannot fake their IP
+        proxy_set_header X-Forwarded-Proto https;
+    }
+    location / { try_files $uri /index.html; }
+}
