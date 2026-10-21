@@ -1,0 +1,1 @@
+# krednova-app
